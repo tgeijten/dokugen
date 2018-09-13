@@ -75,7 +75,6 @@ int write_doku( const xo::path& input, const xo::path& output )
 	if ( base_count > 0 )
 		str << "." << endl << endl;
 
-
 	auto derived_count = 0;
 	for ( auto* node = root->first_node( "derivedcompoundref" ); node; node = node->next_sibling( "derivedcompoundref" ) )
 	{
@@ -103,7 +102,7 @@ int write_doku( const xo::path& input, const xo::path& output )
 				{
 					if ( attrib_count++ == 0 )
 					{
-						str << "===== Parameters =====" << std::endl;
+						str << "==== Public Attributes ====" << std::endl;
 						str << "^ Parameter ^ Type ^ Description ^" << std::endl;
 					}
 
@@ -115,10 +114,8 @@ int write_doku( const xo::path& input, const xo::path& output )
 			}
 		}
 	}
-	return attrib_count;
-}
 
-string extract_ref( const prop_node& pn )
-{
-	return "[[" + pn.get<string>( "refid" ) + "|" + pn.get_value() + "]]";
+	str << endl << "<sub>Converted from doxygen using [[https://github.com/tgeijten/dokugen|dokugen]]</sub>" << endl;
+
+	return attrib_count;
 }
