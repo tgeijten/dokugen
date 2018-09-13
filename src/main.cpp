@@ -39,12 +39,8 @@ int main( int argc, char* argv[] )
 			try
 			{
 				auto n = write_doku( input_path, output_path );
-				if ( n > 0 )
-				{
-					log::info( input_path.string(), ": ", n, " elements converted" );
-					++converted;
-				}
-				else xo::remove( output_path );
+				log::info( input_path.string(), ": ", n, " elements converted" );
+				++converted;
 			}
 			catch ( std::exception& e )
 			{

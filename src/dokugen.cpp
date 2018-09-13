@@ -45,7 +45,7 @@ int write_doku( const xo::path& input, const xo::path& output )
 	root = root->first_node( "compounddef" );
 	xo_error_if( !root, "Could not find compounddef" );
 
-	auto name = root->first_node( "compoundname" )->value();
+	auto name = xo::clean_type_name( root->first_node( "compoundname" )->value() );
 	auto brief = extract_text( root->first_node( "briefdescription" ) );
 	auto detailed = extract_text( root->first_node( "detaileddescription" ) );
 
@@ -61,15 +61,33 @@ int write_doku( const xo::path& input, const xo::path& output )
 		str << detailed << endl;
 	str << endl;
 
-	auto derived_count = 0;
-	for ( auto* derived = root->first_node( "derivedcompoundref" ); derived; derived = derived->next_sibling( "derivedcompoundref" ) )
+	//str << "==== Inheritance ====" << std::endl;
+	auto base_count = 0;
+	for ( auto* node = root->first_node( "basecompoundref" ); node; node = node->next_sibling( "basecompoundref" ) )
 	{
-		if ( derived_count++ == 0 )
-			str << "===== Derived types =====" << endl;
-		str << extract_ref( derived ) << endl;
+		if ( auto s = extract_ref( node ); !s.empty() )
+		{
+			if ( base_count++ == 0 )
+				str << "**Inherits from** " << s;
+			else str << ", " << s;
+		}
+	}
+	if ( base_count > 0 )
+		str << "." << endl << endl;
+
+
+	auto derived_count = 0;
+	for ( auto* node = root->first_node( "derivedcompoundref" ); node; node = node->next_sibling( "derivedcompoundref" ) )
+	{
+		if ( auto s = extract_ref( node ); !s.empty() )
+		{
+			if ( derived_count++ == 0 )
+				str << "**Inherited by** " << s;
+			else str << ", " << s;
+		}
 	}
 	if ( derived_count > 0 )
-		str << endl;
+		str << "." << endl << endl;
 
 	// write sections
 	auto attrib_count = 0;
@@ -85,7 +103,7 @@ int write_doku( const xo::path& input, const xo::path& output )
 				{
 					if ( attrib_count++ == 0 )
 					{
-						str << "==== Parameters ====" << std::endl;
+						str << "===== Parameters =====" << std::endl;
 						str << "^ Parameter ^ Type ^ Description ^" << std::endl;
 					}
 
