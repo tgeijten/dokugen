@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(noname)
+project(dokugen)
 
 # add CMakeModules to path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_SOURCE_DIR}/CMakeModules")
@@ -12,6 +12,10 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}")
 
 # packages
 find_package(Xo)
+
+# contrib include paths
+include_directories(${CMAKE_SOURCE_DIR}/contrib/tclap-1.2.1/include)
+include_directories(${CMAKE_SOURCE_DIR}/contrib/rapidxml-1.13)
 
 # projects
 add_subdirectory(submodules/xo)
