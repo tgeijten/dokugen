@@ -38,7 +38,7 @@ int main( int argc, char* argv[] )
 
 			try
 			{
-				auto n = write_doku_xml( input_path, output_path );
+				auto n = write_doku( input_path, output_path );
 				if ( n > 0 )
 				{
 					log::info( input_path.string(), ": ", n, " elements converted" );
@@ -62,6 +62,5 @@ int main( int argc, char* argv[] )
 	}
 
 	log::info( "Successfully converted ", converted, " files..." );
-	xo::wait_for_key();
 	return 0;
 }
