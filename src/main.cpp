@@ -11,6 +11,8 @@
 
 using namespace xo;
 
+const xo::version dokugen_version = xo::version( 1, 0, 0 );
+
 int main( int argc, char* argv[] )
 {
 	xo::log::console_sink sink( xo::log::info_level );
@@ -18,18 +20,24 @@ int main( int argc, char* argv[] )
 
 	try
 	{
-		TCLAP::CmdLine cmd( "dokugen", ' ', "1.0", true );
-		TCLAP::UnlabeledValueArg< string > input( "input", "Input folder name", true, "", "Path of the file containing the XML doxygen output", cmd );
-		TCLAP::UnlabeledValueArg< string > output( "output", "Output folder name", false, "", "Path of the file containing the dokuwiki output", cmd );
+		std::cout << "Dokugen version " << dokugen_version << std::endl;
+		std::cout << "(C) Copyright 2018 by Thomas Geijtenbeek" << std::endl << std::endl;
+
+		TCLAP::CmdLine cmd( "dokugen", ' ', dokugen_version.str(), true );
+		TCLAP::UnlabeledValueArg< string > input( "input", "Folder from where to read XML doxygen output", true, "", "Folder", cmd );
+		TCLAP::UnlabeledValueArg< string > output( "output", "Folder where to write dokuwiki output", false, "", "Folder", cmd );
+		TCLAP::MultiArg< string > remove( "r", "remove", "Remove part of name", false, "String", cmd );
 		cmd.parse( argc, argv );
 
-		auto output_dir = path( output.getValue() );
+		dokugen_settings cfg;
+		cfg.output_dir = path( output.getValue() );
+		xo::create_directories( cfg.output_dir );
+		for ( auto& r : remove )
+			cfg.remove_strings.emplace_back( r );
 
 		for ( auto& e : std::experimental::filesystem::v1::directory_iterator( input.getValue() ) )
 		{
 			auto input_path = xo::path( e.path().string() );
-			auto output_path = output_dir / input_path.filename().replace_extension( "txt" );
-
 			auto filename = input_path.filename().string();
 			if ( input_path.extension() != "xml" )
 				continue;
@@ -38,7 +46,7 @@ int main( int argc, char* argv[] )
 
 			try
 			{
-				auto n = write_doku( input_path, output_path );
+				auto n = write_doku( input_path, cfg );
 				log::info( input_path.string(), ": ", n, " elements converted" );
 				++converted;
 			}
