@@ -21,25 +21,28 @@ string fix_string( string str, const dokugen_settings& cfg ) {
 
 string extract_ref( xml_node<>* node, const dokugen_settings& cfg )
 {
-	auto* id = node->first_attribute( "refid" );
-	if ( id )
+	if ( auto* id = node->first_attribute( "refid" ) )
 		return string( "[[" ) + fix_string( id->value(), cfg ) + "|" + node->value() + "]]";
-	else return "";
+	else return "???";
 }
 
 string extract_text( xml_node<>* node, const dokugen_settings& cfg )
 {
-	string str = node->value();
-	if ( auto* para = node->first_node( "para" ) )
+	string result;
+
+	for ( xml_node<>* child = node->first_node(); child; child = child->next_sibling() )
 	{
-		for ( xml_node<>* child = para->first_node(); child; child = child->next_sibling() )
+		if ( child->type() == node_element )
 		{
-			if ( child->type() == node_element )
-				str += extract_ref( child, cfg );
-			else str += child->value();
+			auto name = string( child->name() );
+			if ( name == "para" )
+				result += extract_text( child, cfg );
+			else if ( name == "ref" )
+				result += extract_ref( child, cfg );
 		}
+		else result += child->value();
 	}
-	return str;
+	return result;
 }
 
 int write_doku( const xo::path& input, const dokugen_settings& cfg )
@@ -117,7 +120,7 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 					}
 
 					str << "^ " << member->first_node( "name" )->value();
-					str << " | " << member->first_node( "type" )->value();
+					str << " | " << extract_text( member->first_node( "type" ), cfg );
 					str << " | " << brief;
 					str << " |" << std::endl;
 				}
