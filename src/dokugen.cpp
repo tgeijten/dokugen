@@ -7,6 +7,7 @@
 #include "rapidxml_print.hpp"
 #include "xo/filesystem/filesystem.h"
 #include "xo/string/string_tools.h"
+#include "xo/utility/hash.h"
 
 using namespace xo;
 using namespace rapidxml;
@@ -35,10 +36,14 @@ string extract_text( xml_node<>* node, const dokugen_settings& cfg )
 		if ( child->type() == node_element )
 		{
 			auto name = string( child->name() );
-			if ( name == "para" )
-				result += extract_text( child, cfg );
-			else if ( name == "ref" )
-				result += extract_ref( child, cfg );
+			switch ( xo::hash( name ) )
+			{
+			case "para"_hash: result += extract_text( child, cfg ); break;
+			case "ref"_hash: result += extract_ref( child, cfg ); break;
+			case "emphasis"_hash: result += "//" + extract_text( child, cfg ) + "//"; break;
+			case "bold"_hash: result += "**" + extract_text( child, cfg ) + "**"; break;
+			case "subscript"_hash: result += "<sub>" + extract_text( child, cfg ) + "</sub>"; break;
+			}
 		}
 		else result += child->value();
 	}
@@ -71,7 +76,7 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 	str << "====== " << name << " ======" << endl;
 	str << brief << endl;
 	if ( !detailed.empty() )
-		str << detailed << endl;
+		str << endl << detailed << endl;
 	str << endl;
 
 	//str << "==== Inheritance ====" << std::endl;
@@ -110,7 +115,7 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 		{
 			for ( auto* member = section->first_node( "memberdef" ); member; member = member->next_sibling( "memberdef" ) )
 			{
-				auto brief = extract_text( member->first_node( "briefdescription" ), cfg );
+				auto brief = xo::trim_str( extract_text( member->first_node( "briefdescription" ), cfg ) );
 				if ( !brief.empty() )
 				{
 					if ( attrib_count++ == 0 )
