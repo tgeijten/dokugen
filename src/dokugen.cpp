@@ -73,13 +73,14 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 	auto str = std::ofstream( output.string() );
 	xo_error_if( !str.good(), "Could not open " + output.string() );
 
+	// title + description
 	str << "====== " << name << " ======" << endl;
 	str << brief << endl;
 	if ( !detailed.empty() )
 		str << endl << detailed << endl;
 	str << endl;
 
-	//str << "==== Inheritance ====" << std::endl;
+	// inherited from
 	auto base_count = 0;
 	for ( auto* node = root->first_node( "basecompoundref" ); node; node = node->next_sibling( "basecompoundref" ) )
 	{
@@ -93,6 +94,7 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 	if ( base_count > 0 )
 		str << "." << endl << endl;
 
+	// inherited by
 	auto derived_count = 0;
 	for ( auto* node = root->first_node( "derivedcompoundref" ); node; node = node->next_sibling( "derivedcompoundref" ) )
 	{
