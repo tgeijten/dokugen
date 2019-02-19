@@ -108,7 +108,7 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 	if ( derived_count > 0 )
 		str << "." << endl << endl;
 
-	// write sections
+	// public attributes
 	auto attrib_count = 0;
 	for ( auto* section = root->first_node( "sectiondef" ); section; section = section->next_sibling( "sectiondef" ) )
 	{
