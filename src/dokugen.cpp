@@ -11,7 +11,11 @@
 
 using namespace xo;
 using namespace rapidxml;
-using std::endl;
+
+using std::endl, std::ofstream, std::string;
+
+#define FOR_EACH_XML_NODE( _parent_, _child_, _name_ ) \
+for ( auto* _child_ = _parent_->first_node( _name_ ); _child_; _child_ = _child_->next_sibling( _name_ ) )
 
 
 string fix_string( string str, const dokugen_settings& cfg ) {
@@ -50,12 +54,105 @@ string extract_text( xml_node<>* node, const dokugen_settings& cfg )
 	return result;
 }
 
+int write_inherited_from( xml_node<>* root, const dokugen_settings& cfg, ofstream& str )
+{
+	auto base_count = 0;
+	FOR_EACH_XML_NODE( root, node, "basecompoundref" )
+	{
+		if ( auto s = extract_ref( node, cfg ); !s.empty() )
+		{
+			if ( base_count++ == 0 )
+				str << endl << "**Inherits from** " << s;
+			else str << ", " << s;
+		}
+	}
+	if ( base_count > 0 )
+		str << "." << endl;
+	return base_count;
+}
+
+int write_inherited_by( xml_node<>* root, const dokugen_settings& cfg, ofstream& str )
+{
+	auto derived_count = 0;
+	FOR_EACH_XML_NODE( root, node, "derivedcompoundref" )
+	{
+		if ( auto s = extract_ref( node, cfg ); !s.empty() )
+		{
+			if ( derived_count++ == 0 )
+				str << endl << "**Inherited by** " << s;
+			else str << ", " << s;
+		}
+	}
+	if ( derived_count > 0 )
+		str << "." << endl;
+	return derived_count;
+}
+
+int write_attributes( xml_node<>* root, string &brief, const dokugen_settings& cfg, ofstream &str )
+{
+	auto attrib_count = 0;
+	FOR_EACH_XML_NODE( root, section, "sectiondef" )
+	{
+		string kind = section->first_attribute( "kind" )->value();
+		if ( kind == "public-attrib" )
+		{
+			FOR_EACH_XML_NODE( section, member, "memberdef" )
+			{
+				auto brief = xo::trim_str( extract_text( member->first_node( "briefdescription" ), cfg ) );
+				if ( !brief.empty() )
+				{
+					if ( attrib_count++ == 0 )
+					{
+						str << endl << "==== Public Attributes ====" << endl;
+						str << "^ Parameter ^ Type ^ Description ^" << endl;
+					}
+
+					str << "^ " << member->first_node( "name" )->value();
+					str << " | " << extract_text( member->first_node( "type" ), cfg );
+					str << " | " << brief;
+					str << " |" << endl;
+				}
+			}
+		}
+	}
+	return attrib_count;
+}
+
+int write_members( xml_node<>* root, string &brief, const dokugen_settings& cfg, ofstream &str )
+{
+	auto count = 0;
+	FOR_EACH_XML_NODE( root, section, "sectiondef" )
+	{
+		string kind = section->first_attribute( "kind" )->value();
+		if ( kind == "public-func" )
+		{
+			FOR_EACH_XML_NODE( section, member, "memberdef" )
+			{
+				auto brief = xo::trim_str( extract_text( member->first_node( "briefdescription" ), cfg ) );
+				if ( !brief.empty() )
+				{
+					if ( count++ == 0 )
+					{
+						str << endl << "==== Public Functions ====" << endl;
+						str << "^ Function ^ Description ^" << endl;
+					}
+
+					str << "^ " << member->first_node( "definition" )->value() << member->first_node( "argsstring" )->value();
+					str << " | " << brief;
+					str << " |" << endl;
+				}
+			}
+		}
+	}
+	return count;
+}
+
 int write_doku( const xo::path& input, const dokugen_settings& cfg )
 {
-	path output = cfg.output_dir / fix_string( input.filename().replace_extension( "txt" ).string(), cfg );
+	path output = cfg.output_dir / fix_string( input.filename().replace_extension( "txt" ).str(), cfg );
 
 	rapidxml::xml_document<> doc;
-	std::string file_contents = load_string( input );
+	string file_contents = load_string( input );
 	doc.parse< 0 >( &file_contents[ 0 ] );
 
 	xml_node<>* root = doc.first_node( "doxygen" );
@@ -63,79 +160,37 @@ int write_doku( const xo::path& input, const dokugen_settings& cfg )
 	root = root->first_node( "compounddef" );
 	xo_error_if( !root, "Could not find compounddef" );
 
-	auto name = xo::clean_type_name( root->first_node( "compoundname" )->value() );
+	auto name = xo::tidy_type_name( root->first_node( "compoundname" )->value() );
 	auto brief = extract_text( root->first_node( "briefdescription" ), cfg );
 	auto detailed = extract_text( root->first_node( "detaileddescription" ), cfg );
 
 	if ( brief.empty() )
 		return 0;
 
-	auto str = std::ofstream( output.string() );
-	xo_error_if( !str.good(), "Could not open " + output.string() );
+	ofstream str( output.str() );
+	xo_error_if( !str.good(), "Could not open " + output.str() );
 
 	// title + description
 	str << "====== " << name << " ======" << endl;
 	str << brief << endl;
 	if ( !detailed.empty() )
 		str << endl << detailed << endl;
-	str << endl;
+
+	int elem = 0;
 
 	// inherited from
-	auto base_count = 0;
-	for ( auto* node = root->first_node( "basecompoundref" ); node; node = node->next_sibling( "basecompoundref" ) )
-	{
-		if ( auto s = extract_ref( node, cfg ); !s.empty() )
-		{
-			if ( base_count++ == 0 )
-				str << "**Inherits from** " << s;
-			else str << ", " << s;
-		}
-	}
-	if ( base_count > 0 )
-		str << "." << endl << endl;
+	elem += write_inherited_from( root, cfg, str );
 
 	// inherited by
-	auto derived_count = 0;
-	for ( auto* node = root->first_node( "derivedcompoundref" ); node; node = node->next_sibling( "derivedcompoundref" ) )
-	{
-		if ( auto s = extract_ref( node, cfg ); !s.empty() )
-		{
-			if ( derived_count++ == 0 )
-				str << "**Inherited by** " << s;
-			else str << ", " << s;
-		}
-	}
-	if ( derived_count > 0 )
-		str << "." << endl << endl;
+	elem += write_inherited_by( root, cfg, str );
 
 	// public attributes
-	auto attrib_count = 0;
-	for ( auto* section = root->first_node( "sectiondef" ); section; section = section->next_sibling( "sectiondef" ) )
-	{
-		string kind = section->first_attribute( "kind" )->value();
-		if ( kind == "public-attrib" )
-		{
-			for ( auto* member = section->first_node( "memberdef" ); member; member = member->next_sibling( "memberdef" ) )
-			{
-				auto brief = xo::trim_str( extract_text( member->first_node( "briefdescription" ), cfg ) );
-				if ( !brief.empty() )
-				{
-					if ( attrib_count++ == 0 )
-					{
-						str << "==== Public Attributes ====" << std::endl;
-						str << "^ Parameter ^ Type ^ Description ^" << std::endl;
-					}
+	elem += write_attributes( root, brief, cfg, str );
 
-					str << "^ " << member->first_node( "name" )->value();
-					str << " | " << extract_text( member->first_node( "type" ), cfg );
-					str << " | " << brief;
-					str << " |" << std::endl;
-				}
-			}
-		}
-	}
+	// public members
+	elem += write_members( root, brief, cfg, str );
 
 	str << endl << "<sub>Converted from doxygen using [[https://github.com/tgeijten/dokugen|dokugen]]</sub>" << endl;
 
-	return attrib_count;
+	return elem;
 }

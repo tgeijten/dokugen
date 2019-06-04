@@ -8,6 +8,7 @@
 #include "xo/container/prop_node.h"
 #include "dokugen.h"
 #include "xo/filesystem/filesystem.h"
+#include "xo/system/version.h"
 
 using namespace xo;
 
@@ -20,10 +21,10 @@ int main( int argc, char* argv[] )
 
 	try
 	{
-		std::cout << "Dokugen version " << dokugen_version << std::endl;
-		std::cout << "(C) Copyright 2018 by Thomas Geijtenbeek" << std::endl << std::endl;
+		std::cout << "Dokugen version " << to_str( dokugen_version ) << std::endl;
+		std::cout << "(C) Copyright 2018-2019 by Thomas Geijtenbeek" << std::endl << std::endl;
 
-		TCLAP::CmdLine cmd( "dokugen", ' ', dokugen_version.str(), true );
+		TCLAP::CmdLine cmd( "dokugen", ' ', to_str( dokugen_version ), true );
 		TCLAP::UnlabeledValueArg< string > input( "input", "Folder from where to read XML doxygen output", true, "", "Folder", cmd );
 		TCLAP::UnlabeledValueArg< string > output( "output", "Folder where to write dokuwiki output", false, "", "Folder", cmd );
 		TCLAP::MultiArg< string > remove( "r", "remove", "Remove part of name", false, "String", cmd );
@@ -38,7 +39,7 @@ int main( int argc, char* argv[] )
 		for ( auto& e : std::experimental::filesystem::v1::directory_iterator( input.getValue() ) )
 		{
 			auto input_path = xo::path( e.path().string() );
-			auto filename = input_path.filename().string();
+			auto filename = input_path.filename().str();
 			if ( input_path.extension() != "xml" )
 				continue;
 			if ( !str_begins_with( filename, "class" ) && !str_begins_with( filename, "struct" ) )
@@ -47,12 +48,12 @@ int main( int argc, char* argv[] )
 			try
 			{
 				auto n = write_doku( input_path, cfg );
-				log::info( input_path.string(), ": ", n, " elements converted" );
+				log::info( input_path.str(), ": ", n, " elements converted" );
 				++converted;
 			}
 			catch ( std::exception& e )
 			{
-				log::error( input_path.string(), ": ", e.what() );
+				log::error( input_path.str(), ": ", e.what() );
 			}
 		}
 	}
