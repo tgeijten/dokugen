@@ -28,7 +28,7 @@ string extract_ref( xml_node<>* node, const dokugen_settings& cfg )
 {
 	if ( auto* id = node->first_attribute( "refid" ) )
 		return string( "[[" ) + fix_string( id->value(), cfg ) + "|" + node->value() + "]]";
-	else return "???";
+	else return "";
 }
 
 string extract_text( xml_node<>* node, const dokugen_settings& cfg )
