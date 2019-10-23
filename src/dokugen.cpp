@@ -47,6 +47,7 @@ string extract_text( xml_node<>* node, const dokugen_settings& cfg )
 			case "emphasis"_hash: result += "//" + extract_text( child, cfg ) + "//"; break;
 			case "bold"_hash: result += "**" + extract_text( child, cfg ) + "**"; break;
 			case "subscript"_hash: result += "<sub>" + extract_text( child, cfg ) + "</sub>"; break;
+			case "verbatim"_hash: result += "<code>" + extract_text( child, cfg ) + "</code>"; break;
 			}
 		}
 		else result += child->value();
@@ -137,7 +138,9 @@ int write_members( xml_node<>* root, string &brief, const dokugen_settings& cfg,
 						str << "^ Function ^ Description ^" << endl;
 					}
 
-					str << "^ " << member->first_node( "definition" )->value() << member->first_node( "argsstring" )->value();
+					str << "| " << extract_text( member->first_node( "type" ), cfg );
+					str << " **" << member->first_node( "name" )->value() << "**";
+					str << extract_text( member->first_node( "argsstring" ), cfg );
 					str << " | " << brief;
 					str << " |" << endl;
 				}

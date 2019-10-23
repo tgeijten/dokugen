@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
 		{
 			auto input_path = xo::path( e.path().string() );
 			auto filename = input_path.filename().str();
-			if ( input_path.extension() != "xml" )
+			if ( input_path.extension_no_dot() != "xml" )
 				continue;
 			if ( !str_begins_with( filename, "class" ) && !str_begins_with( filename, "struct" ) )
 				continue;
