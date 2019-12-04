@@ -125,7 +125,7 @@ int write_members( xml_node<>* root, string &brief, const dokugen_settings& cfg,
 	FOR_EACH_XML_NODE( root, section, "sectiondef" )
 	{
 		string kind = section->first_attribute( "kind" )->value();
-		if ( kind == "public-func" )
+		if ( kind == "public-func" || kind == "public-static-func" )
 		{
 			FOR_EACH_XML_NODE( section, member, "memberdef" )
 			{
