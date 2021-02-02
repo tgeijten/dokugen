@@ -16,7 +16,7 @@ const xo::version dokugen_version = xo::version( 1, 0, 0 );
 
 int main( int argc, char* argv[] )
 {
-	xo::log::console_sink sink( xo::log::info_level );
+	xo::log::console_sink sink( xo::log::level::info );
 	int converted = 0;
 
 	try
@@ -36,7 +36,7 @@ int main( int argc, char* argv[] )
 		for ( auto& r : remove )
 			cfg.remove_strings.emplace_back( r );
 
-		for ( auto& e : std::experimental::filesystem::v1::directory_iterator( input.getValue() ) )
+		for ( auto& e : std::filesystem::directory_iterator( input.getValue() ) )
 		{
 			auto input_path = xo::path( e.path().string() );
 			auto filename = input_path.filename().str();
