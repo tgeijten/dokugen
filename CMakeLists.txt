@@ -11,7 +11,7 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/${CONFIG_NAME}")
 
 # packages
-find_package(Xo)
+find_package(XO)
 
 # contrib include paths
 include_directories(${CMAKE_SOURCE_DIR}/contrib/tclap-1.2.1/include)
