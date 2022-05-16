@@ -21,6 +21,8 @@ for ( auto* _child_ = _parent_->first_node( _name_ ); _child_; _child_ = _child_
 string fix_string( string str, const dokugen_settings& cfg ) {
 	for ( auto& s : cfg.remove_strings )
 		xo::replace_str( str, s, "" );
+	if ( cfg.remove_trailing_underscores )
+		xo::trim_right_str( str, "_" );
 	return str;
 }
 
