@@ -50,6 +50,8 @@ string extract_text( xml_node<>* node, const dokugen_settings& cfg )
 			case "bold"_hash: result += "**" + extract_text( child, cfg ) + "**"; break;
 			case "subscript"_hash: result += "<sub>" + extract_text( child, cfg ) + "</sub>"; break;
 			case "verbatim"_hash: result += "<code>" + extract_text( child, cfg ) + "</code>"; break;
+			case "itemizedlist"_hash: result += extract_text( child, cfg ) + "\n"; break;
+			case "listitem"_hash: result += "\n  * " + extract_text( child, cfg ); break;
 			}
 		}
 		else result += child->value();
