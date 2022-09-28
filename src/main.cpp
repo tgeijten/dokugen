@@ -12,7 +12,7 @@
 
 using namespace xo;
 
-const xo::version dokugen_version = xo::version( 1, 0, 0 );
+const xo::version dokugen_version = xo::version( 1, 0, 1 );
 
 int main( int argc, char* argv[] )
 {

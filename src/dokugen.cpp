@@ -22,7 +22,7 @@ string fix_string( string str, const dokugen_settings& cfg ) {
 	for ( auto& s : cfg.remove_strings )
 		xo::replace_str( str, s, "" );
 	if ( cfg.remove_trailing_underscores )
-		xo::trim_right_str( str, "_" );
+		str = xo::trim_right_str( str, "_" );
 	return str;
 }
 
@@ -93,7 +93,7 @@ int write_inherited_by( xml_node<>* root, const dokugen_settings& cfg, ofstream&
 	return derived_count;
 }
 
-int write_attributes( xml_node<>* root, string &brief, const dokugen_settings& cfg, ofstream &str )
+int write_attributes( xml_node<>* root, string &parent_brief, const dokugen_settings& cfg, ofstream &str )
 {
 	auto attrib_count = 0;
 	FOR_EACH_XML_NODE( root, section, "sectiondef" )
@@ -112,8 +112,10 @@ int write_attributes( xml_node<>* root, string &brief, const dokugen_settings& c
 						str << "^ Parameter ^ Type ^ Description ^" << endl;
 					}
 
-					str << "^ " << member->first_node( "name" )->value();
-					str << " | " << extract_text( member->first_node( "type" ), cfg );
+					auto name = fix_string( member->first_node( "name" )->value(), cfg );
+					auto type = extract_text( member->first_node( "type" ), cfg );
+					str << "^ " << name;
+					str << " | " << type;
 					str << " | " << brief;
 					str << " |" << endl;
 				}
@@ -123,7 +125,7 @@ int write_attributes( xml_node<>* root, string &brief, const dokugen_settings& c
 	return attrib_count;
 }
 
-int write_members( xml_node<>* root, string &brief, const dokugen_settings& cfg, ofstream &str )
+int write_members( xml_node<>* root, string &parent_brief, const dokugen_settings& cfg, ofstream &str )
 {
 	auto count = 0;
 	FOR_EACH_XML_NODE( root, section, "sectiondef" )
